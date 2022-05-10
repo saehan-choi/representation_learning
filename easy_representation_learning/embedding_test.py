@@ -27,7 +27,6 @@ def nearest_neighbor(image, all_dataset, labels, num_sample):
         similarImgPath = labels[i]
         print(similarImgPath)
 
-
 def create_embedding(encoder, dataloader, embedding_dim, device):
     """
     create embedding using encoder from dataloader.
@@ -50,6 +49,11 @@ def create_embedding(encoder, dataloader, embedding_dim, device):
             # 휴,....... 이미지 이름을 어케가져오냐고...
 
     return embedding
+
+def one_embedding(encoder, device):
+    # 여기에 이미지 하나만 임베딩하도록 하세요.
+    # 그리고 이용하세요.
+    pass
 
 encodeModel = encoderModel().to(CFG.device)
 # decodeModel = decoderModel().to(CFG.device)
@@ -74,10 +78,7 @@ flattend_embedding = torch.flatten(embedding, start_dim=1).cpu().detach().numpy(
 # print(data.shape)
 
 print(flattend_embedding.shape)
-
-# 무슨 이미지인지 알아야 나중에 plot 띄우지..
-# 흠....................... 어케 해결할 것인가?
-# embedding만 가지고 이미지를 알아낼 수 는 없을까?
-# model을 돌려서 embedding을 저장한다음에 맞는지 비교하면 금방알아낼 수 있다.
-# 다만 embedding을 만든 모델이 똑같아야 하고 가중치도 똑같아야합니다.
-
+# 아! 여기서 제일 L2 distance(euclidean distance)가 제일 낮은애들 몇개가 나올거잖아요
+# -> 걔내들만 추려서 원래의 embedding vector들과 비교해서 알아내도록 하는게 제일 나은선택 같습니다.
+# 걔내들의 이미지를 알아내면 그 경로의 이미지들을 shutil.copy 하면 될 듯 합니다.
+print(flattend_embedding)
