@@ -208,7 +208,11 @@ def compute_similar_iamges(encoder, image, num_images, embedding, device):
         # flattened_embedding = image_embedding.reshape((image_embedding.shape[0], -1))
         # 여기서 변경했습니다 에러나면 변경하시오.
     flattend_embedding = torch.flatten(image_embedding, start_dim=1)
-    
+
+# https://velog.io/@ppyooy336/Numpy%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-KNN-%EA%B5%AC%ED%98%84
+# 여기참조하고 https://github.com/public-ai/dl-lecture/blob/master/ml-homework/1_Numpy%EB%A5%BC%20%ED%99%9C%EC%9A%A9%ED%95%9C%20%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D%20-%20KNN%20%EB%B6%84%EB%A5%98%EA%B8%B0.ipynb
+# 이사람이 배운곳
+
 def k_nearest_neibor(input, dataset, labels, K):
     # k = a-b
     # a = embedding_image  b = search_image
@@ -219,21 +223,6 @@ def k_nearest_neibor(input, dataset, labels, K):
     # 정규화를 하는 대신에 z 표준화를 하는방식이 제일 많이쓰인답니다.
     square = (dataset-input)**2
     distance = np.sqrt(square.sum(axis=1))
-
-    
-
-
-def classify_knn(inX, dataset, labels, K):
-    dists = dataset - inX
-    dists = np.array(np.sqrt(dists[:,0]**2 + dists[:,1]**2))
-    sorted_index = np.argsort(dists)
-    sorted_labels = np.array(labels[sorted_index[:]])
-    K_nearest_labels = sorted_labels[:K]
-    count_dict = {}
-    for label in K_nearest_labels:
-      count_dict[label] = count_dict.get(label,0) + 1
-    _labels, count_labels = np.array(list(count_dict.keys())), np.array(list(count_dict.values()))
-    return _labels[count_labels.argmax()]
 
 
 if __name__ == "__main__":
