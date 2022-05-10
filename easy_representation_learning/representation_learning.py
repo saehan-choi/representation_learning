@@ -13,6 +13,8 @@ from glob import glob
 import cv2
 import numpy as np
 
+from sklearn.neighbors import NearestNeighbors
+
 class CFG:
     # imagePath
     # 이거 jpg말고도 될수있게 한번ㄱ..ㄱ;
@@ -24,6 +26,7 @@ class CFG:
 
     # 이것만 있으면 image의 사이즈를 줄였다가, 또 늘릴수 있음 같은크기로 ( list(reversed()) 를 통해서 )
     in_channels = [3, 16, 32, 64, 128]
+    # 이거 네트워크 더 깊게하니깐 maxpooling 때문에 에러가 납니다. -> 추후 수정 부탁드립니다. .__. 
     out_channels = [16, 32, 64, 128, 256]
 
     img_resize = (96, 96)
@@ -32,7 +35,7 @@ class CFG:
     
     lr = 3e-4
     loss = nn.MSELoss()
-    epochs = 5
+    epochs = 1
     batch_size = 128
 
     transform = A.Compose([
@@ -89,6 +92,8 @@ class ImgDataset(Dataset):
 
     def __getitem__(self, idx):
         image = self.image_list[idx]
+        # img_name = image.split('\\')[-1]
+
         image = cv2.imread(image, cv2.IMREAD_COLOR)
 
         if self.transform:
@@ -116,18 +121,12 @@ def train_one_epoch(encoder, decoder, optimizer, dataloader, epoch, loss_fn, dev
 
         optimizer.zero_grad()
         encode_outputs = encoder(images)
-        # print(f'output:{encode_outputs.size()}')
-        # print(f'reshape:{encode_outputs.reshape((encode_outputs.size()[0], -1)).size()}')
-        # fla = torch.flatten(encode_outputs, start_dim=1).size()
-        # print(f'flatten:{fla}')
-
         outputs = decoder(encode_outputs)
 
         loss = loss_fn(outputs, images)
         loss.backward()
         optimizer.step()
-        # optimizer.zero_grad -> loss.backward -> optimizer.step 이 순서대로 하면됨.
-
+        
         running_loss += loss.item()*batch_size
         dataset_size += batch_size
         train_loss = running_loss/dataset_size
@@ -167,63 +166,40 @@ def val_one_epoch(encoder, decoder, dataloader, epoch, loss_fn, device):
             torch.save(encoder.state_dict(), CFG.weightsavePath+"encoder_model.pt")
             torch.save(decoder.state_dict(), CFG.weightsavePath+"decoder_model.pt")
 
-# 이 밑에 두개함수는 학습 잘되면, torch load해서 가져오고, 테스트 하도록하기
-# 그게 더 편함.
-def create_embedding(encoder, dataloader, embedding_dim, device):
-    """
-    create embedding using encoder from dataloader.
-    encoder: A convolutional Encoder. e.g. torch_model convEncoder
-    dataloader: PyTorch datalodaer, containing (images, images) over entire dataset.
-    embedding_dim: Tuple (c, h, w) Dimension of embedding = output of encoder dimentions.
-    returns: embedding of size (num_image_in_loader+1, c, h, w) --> ?
-    """
-    encoder.eval()
-    embedding = torch.randn(embedding_dim)
-
-    bar = tqdm(enumerate(dataloader), total=len(dataloader))
-    with torch.no_grad():
-        for step, data in bar:
-            images = data.to(device, dtype=torch.float)
-            encode_outputs = encoder(images).cpu()
-            # 이거 cpu 빼보고 해보기 --> torch.randn에서 cuda를 안사용해서 X
-            # keep adding these outputs to embeddings.  0번째 차원에서 concatenation
-            embedding = torch.cat((embedding, encode_outputs), 0)
-
-    return embedding
-
-def compute_similar_iamges(encoder, image, num_images, embedding, device):
-    """
-    image: Image whose similar images are to be found.
-    num_images: Number of similar images to find.
-    embedding : A (num_images, embedding_dim) Embedding of images learnt from auto-encoder.
-    device : "cuda" or "cpu" device.
-    """
-    image_tensor = CFG.transform(image)
-    # 이거 에러날수도 있음 확인
-    image_tensor = image_tensor.unsqueeze(0)
-    # 0번째 차원에 텐서 dimension 확장 -> torch에 넣어주기 위해
-
-    with torch.no_grad():
-        image_embedding = encoder(image_tensor).cpu().detach().numpy()
-        # flattened_embedding = image_embedding.reshape((image_embedding.shape[0], -1))
-        # 여기서 변경했습니다 에러나면 변경하시오.
-    flattend_embedding = torch.flatten(image_embedding, start_dim=1)
 
 # https://velog.io/@ppyooy336/Numpy%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-KNN-%EA%B5%AC%ED%98%84
 # 여기참조하고 https://github.com/public-ai/dl-lecture/blob/master/ml-homework/1_Numpy%EB%A5%BC%20%ED%99%9C%EC%9A%A9%ED%95%9C%20%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D%20-%20KNN%20%EB%B6%84%EB%A5%98%EA%B8%B0.ipynb
 # 이사람이 배운곳
 
-def k_nearest_neibor(input, dataset, labels, K):
-    # k = a-b
-    # a = embedding_image  b = search_image
-    # root((a[0]-b[0])^2+(a[1]-b[1])^2+(a[2]-b[2])^2)
-    # 이런방식으로 진행해야 합니다.
+def nearest_neighbor(image, all_dataset, labels, num_sample):
+    # num_sample개의 이미지 path만 추출
 
     # 정규화 + 후에 np.sqrt(k^2)
     # 정규화를 하는 대신에 z 표준화를 하는방식이 제일 많이쓰인답니다.
-    square = (dataset-input)**2
-    distance = np.sqrt(square.sum(axis=1))
+    square = (all_dataset-image)**2
 
+    distance = np.sqrt(square.sum(axis=1))
+    # print(distance)
+    # print(distance.shape)
+
+    sorted_idx = np.argsort(distance)[:num_sample]
+    # 제일작은 index를 반환함
+
+    for i in sorted_idx:
+        similarImgPath = labels[i]
+        print(similarImgPath)
+
+
+
+# def k_nearest_neighbor(image, all_dataset, labels, K):
+#     # 정규화 + 후에 np.sqrt(k^2)
+#     # 정규화를 하는 대신에 z 표준화를 하는방식이 제일 많이쓰인답니다.
+#     square = (all_d       ataset-image)**2
+
+#     distance = np.sqrt(square.sum(axis=1))
+
+#     similar = None
+#     # 필요시 axis 바꾸세요 ㅎㅎ
 
 if __name__ == "__main__":
 
@@ -247,17 +223,11 @@ if __name__ == "__main__":
         train_one_epoch(encodeModel, decodeModel, optimizer, trainDataloader, epoch, CFG.loss, CFG.device)
         val_one_epoch(encodeModel, decodeModel, valDataloader, epoch, CFG.loss, CFG.device)
 
-
     # embedding_shape = (1, 256, 16, 16)
-    # 이거 어려울거 없이 그냥 embedding_dimension임 -> 사이즈 변경시 변경이 필요할 수 있음
-    embedding_shape = (1, 256, int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))), int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))))
+    # 이거 어려울거 없이 그냥 embedding_dimension임 -> 사이즈 변경시 변경이 필요할 수 있음 -> 이거 쓰레기값으로 들어가는거라서
+    # 딱히 상관은 없음 그러나 (1, c, h, w) -> 이런식으로 들어가네용
 
-    # 이거 마지막으로 나오는 encoder dimension 인데 쓰레기값으로 들어갈것이므로 ㄱㅊㄱㅊ
-    embedding = create_embedding(encodeModel, trainDataloader, embedding_shape, CFG.device)
-    
-    flattend_embedding = torch.flatten(embedding, start_dim=1).cpu().detach().numpy()
 
-    np.save(CFG.embeddingsavePath+"data_embedding.npy", flattend_embedding)
 
 
 
