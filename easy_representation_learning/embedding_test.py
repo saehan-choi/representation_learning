@@ -7,7 +7,10 @@ import tqdm
 from representation_learning import *
 
 import numpy as np
+import os
 
+# 여기서 변경잠시 하겠습니다.
+CFG.batch_size = 1
 
 def nearest_neighbor(image, all_dataset, labels, num_sample):
     # num_sample개의 이미지 path만 추출
@@ -35,7 +38,7 @@ def create_embedding(encoder, dataloader, embedding_dim, device):
     embedding_dim: Tuple (c, h, w) Dimension of embedding = output of encoder dimentions.
     returns: embedding of size (num_image_in_loader+1, c, h, w) --> ?
     """
-    encoder.eval()
+
     embedding = torch.randn(embedding_dim)
 
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
@@ -50,14 +53,18 @@ def create_embedding(encoder, dataloader, embedding_dim, device):
 
     return embedding
 
-def one_embedding(encoder, device):
+def one_embedding(encoder, image, device):
     # 여기에 이미지 하나만 임베딩하도록 하세요.
     # 그리고 이용하세요.
+
+
     pass
 
 encodeModel = encoderModel().to(CFG.device)
 # decodeModel = decoderModel().to(CFG.device)
-encodeModel.load_state_dict(torch.load(CFG.weightsavePath+'encoder_model.pt'))
+encodeModel.load_state_dict(torch.load('./weights/encoder_model.pt'))
+# 아 ! 모델이 바뀌었네요.
+encodeModel.eval()
 
 trainDataset = ImgDataset(CFG.trainPath, CFG.transform)
 valDataset = ImgDataset(CFG.valPath, CFG.transform)
@@ -65,9 +72,10 @@ valDataset = ImgDataset(CFG.valPath, CFG.transform)
 trainDataloader = DataLoader(trainDataset, shuffle=True, batch_size=CFG.batch_size)
 valDataloader = DataLoader(valDataset, shuffle=False, batch_size=CFG.batch_size)
 
-embedding_shape = (1, 256, int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))), int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))))
-
+embedding_shape = (1, 1024, int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))), int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))))
 # 이거 마지막으로 나오는 encoder dimension 인데 쓰레기값으로 들어감
+# 마지막 네트워크의 (1, c, w, h) 만 넣어주면 됩니다.
+
 embedding = create_embedding(encodeModel, trainDataloader, embedding_shape, CFG.device)
 flattend_embedding = torch.flatten(embedding, start_dim=1).cpu().detach().numpy()
 
@@ -82,3 +90,7 @@ print(flattend_embedding.shape)
 # -> 걔내들만 추려서 원래의 embedding vector들과 비교해서 알아내도록 하는게 제일 나은선택 같습니다.
 # 걔내들의 이미지를 알아내면 그 경로의 이미지들을 shutil.copy 하면 될 듯 합니다.
 print(flattend_embedding)
+
+# one_embedding(encodeModel, image, CFG.device)
+# 비슷한이미지를 찾아내기 위해 이미지를 넣어줌.
+# 여기서 제일 비슷한 애들을 찾아낼 것임.

@@ -15,6 +15,8 @@ import numpy as np
 
 from sklearn.neighbors import NearestNeighbors
 
+# 간단한 네트워크부터 끝내고, 그 다음시작 ㄱㄱ
+
 class CFG:
     # imagePath
     # 이거 jpg말고도 될수있게 한번ㄱ..ㄱ;
@@ -25,18 +27,19 @@ class CFG:
     valPath = glob('./dataset/val/*.jpg')
 
     # 이것만 있으면 image의 사이즈를 줄였다가, 또 늘릴수 있음 같은크기로 ( list(reversed()) 를 통해서 )
-    in_channels = [3, 16, 32, 64, 128]
+    in_channels = [3, 64, 128, 256, 512]
     # 이거 네트워크 더 깊게하니깐 maxpooling 때문에 에러가 납니다. -> 추후 수정 부탁드립니다. .__. 
-    out_channels = [16, 32, 64, 128, 256]
+    out_channels = [64, 128, 256, 512, 1024]
 
     img_resize = (96, 96)
 
     device = 'cuda'
-    
+
     lr = 3e-4
     loss = nn.MSELoss()
-    epochs = 1
-    batch_size = 128
+    epochs = 100
+    batch_size = 1
+    # batch_size = 128
 
     transform = A.Compose([
                             A.Resize(img_resize[0], img_resize[0]),
