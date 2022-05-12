@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
@@ -23,8 +23,8 @@ class CFG:
     weightsavePath = './weights/'
     embeddingsavePath = './embedding/'
 
-    trainPath = glob('./dataset/train/*.jpg')
-    valPath = glob('./dataset/val/*.jpg')
+    trainPath = glob('./dataset2/train/*.jpg')
+    # valPath = glob('./dataset2/val/*.jpg')
 
     # 이것만 있으면 image의 사이즈를 줄였다가, 또 늘릴수 있음 같은크기로 ( list(reversed()) 를 통해서 )
     in_channels = [3, 64, 128, 256, 512]
@@ -38,7 +38,7 @@ class CFG:
     lr = 3e-4
     loss = nn.MSELoss()
     epochs = 100
-    batch_size = 1
+    batch_size = 256
     # batch_size = 128
 
     transform = A.Compose([
@@ -206,8 +206,11 @@ def nearest_neighbor(image, all_dataset, labels, num_sample):
 
 if __name__ == "__main__":
 
-    trainDataset = ImgDataset(CFG.trainPath, CFG.transform)
-    valDataset = ImgDataset(CFG.valPath, CFG.transform)
+    fullDataset = ImgDataset(CFG.trainPath, CFG.transform)
+    # valDataset = ImgDataset(CFG.valPath, CFG.transform)
+    train_size, val_size = 30000, 7500
+    # 0.8:0.2 입니다.
+    trainDataset, valDataset = random_split(fullDataset, [train_size, val_size])
 
     trainDataloader = DataLoader(trainDataset, shuffle=True, batch_size=CFG.batch_size)
     valDataloader = DataLoader(valDataset, shuffle=False, batch_size=CFG.batch_size)

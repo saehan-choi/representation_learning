@@ -47,7 +47,6 @@ all_dataset = np.array([[1,2,3,4,6,7,10,8,8,4],
                 [1,2,5,4,6,7,8,2,8,1],
                 [1,2,3,3,6,1,8,4,8,5]])
 
-
 image = np.array([5,12,3,2,4,6,2,4,5,6])
 
 # a3 = (a1-a2)**2
@@ -59,44 +58,35 @@ image = np.array([5,12,3,2,4,6,2,4,5,6])
 
 
 # def k_nearest_neighbor(image, all_dataset, labels, K):
-
 #     knn = NearestNeighbors(n_neighbors=2, metric='cosine')
 #     knn.fit(image)
 #     # 필요시 axis 바꾸세요 ㅎㅎ
 
 #     _, indices = knn.kneighbors(all_dataset)
 #     indices_list = indices.tolist()
-
 #     print(f'indices_list:{indices_list}')
 
+def k_nearest_neighbor(image, all_dataset, labels, K):
+    # 정규화 + 후에 np.sqrt(k^2)
+    # 정규화를 하는 대신에 z 표준화를 하는방식이 제일 많이쓰인답니다.
+    square = (all_dataset-image)**2
 
+    distance = np.sqrt(square.sum(axis=1))
+    # print(distance)
+    # print(distance.shape)
 
+    sorted_idx = np.argsort(distance)[:K]
+    print(sorted_idx)
+    # 제일작은 index를 반환함
 
+    for i in sorted_idx:
+        similarImgPath = labels[i]
+        print(similarImgPath)
 
+labels = ['./dataset/mask1.jpg', './dataset/123.jpg', './dataset/634125.jpg', './dataset/162.jpg', './dataset/6131.jpg', './dataset/63127.jpg']
 
-
-
-
-# def k_nearest_neighbor(image, all_dataset, labels, K):
-#     # 정규화 + 후에 np.sqrt(k^2)
-#     # 정규화를 하는 대신에 z 표준화를 하는방식이 제일 많이쓰인답니다.
-#     square = (all_dataset-image)**2
-
-#     distance = np.sqrt(square.sum(axis=1))
-#     # print(distance)
-#     # print(distance.shape)
-
-#     sorted_idx = np.argsort(distance)[:K]
-#     # 제일작은 index를 반환함
-
-#     for i in sorted_idx:
-#         similarImgPath = labels[i]
-#         print(similarImgPath)
-
-# labels = ['./dataset/mask1.jpg', './dataset/123.jpg', './dataset/634125.jpg', './dataset/162.jpg', './dataset/6131.jpg', './dataset/63127.jpg']
-
-# # 이런식으로 우선 개발진행해보자
-# k_nearest_neighbor(image, all_dataset, labels, K=5)
+# 이런식으로 우선 개발진행해보자
+k_nearest_neighbor(image, all_dataset, labels, K=5)
 
 
 # embedding을 이해하려면 이거 돌려보면됨.  reshape안해도 괜찮긌네
