@@ -2,3 +2,5 @@ dataset/
 weights/
 embedding/
 dataset2/
+easy_representation_learning/__pycache__/
+__pycache__/
