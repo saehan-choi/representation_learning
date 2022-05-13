@@ -26,13 +26,12 @@ class CFG:
     trainPath = glob('./dataset2/train/*.jpg')
     # valPath = glob('./dataset2/val/*.jpg')
 
-    # 이것만 있으면 image의 사이즈를 줄였다가, 또 늘릴수 있음 같은크기로 ( list(reversed()) 를 통해서 )
     in_channels = [3, 64, 128, 256, 512]
     # 이거 네트워크 더 깊게하니깐 maxpooling 때문에 에러가 납니다. -> 추후 수정 부탁드립니다. .__. 
     out_channels = [64, 128, 256, 512, 1280]
     img_resize = (224, 224)
     device = 'cuda'
-    lr = 3e-4
+    lr = 3e-3
     loss = nn.MSELoss()
     epochs = 10
     batch_size = 32
@@ -46,7 +45,7 @@ class CFG:
 class encoderModel(nn.Module):
     def __init__(self):
         super(encoderModel, self).__init__()
-        self.model = timm.create_model('efficientnet_b0')
+        self.model = timm.create_model('efficientnet_b0', pretrained=True)
         self.model.global_pool = torch.nn.Identity()
         self.model.classifier = torch.nn.Identity()
 

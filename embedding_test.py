@@ -4,7 +4,7 @@ import torch.nn
 from torch.utils.data import DataLoader
 
 import tqdm
-from representation_learning import *
+from new_representation_learning import *
 
 import numpy as np
 import os
@@ -101,7 +101,7 @@ encodeModel.eval()
 trainDataset = ImgDataset(CFG.trainPath, CFG.transform)
 trainDataloader = DataLoader(trainDataset, shuffle=True, batch_size=CFG.batch_size)
 
-embedding_shape = (1, 1024, int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))), int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))))
+embedding_shape = (1, 1280, int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))), int(CFG.img_resize[0]/(2**(len(CFG.out_channels)))))
 # 이거 마지막으로 나오는 encoder dimension 인데 쓰레기값으로 들어감
 # 마지막 네트워크의 (1, c, w, h) 입니다. batch가 1인이유는 concatenate를 위한 trash value입니다.
 
